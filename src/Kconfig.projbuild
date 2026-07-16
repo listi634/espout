@@ -1,0 +1,111 @@
+menu "espout board configuration"
+
+    config ESPOUT_LCD_VCC_RAIL
+        string "LCD supply rail"
+        default "3V3"
+        help
+            Supply rail used for the LCD module power input.
+
+    config ESPOUT_LCD_GND_RAIL
+        string "LCD ground rail"
+        default "GND"
+        help
+            Ground reference used for the LCD module.
+
+    config ESPOUT_LCD_BACKLIGHT_GPIO
+        int "LCD backlight GPIO (BL)"
+        default 23
+        range 0 23
+        help
+            GPIO connected to the LCD backlight control pin.
+
+    config ESPOUT_LCD_RESET_GPIO
+        int "LCD reset GPIO (RST)"
+        default 22
+        range 0 23
+        help
+            GPIO connected to the LCD reset line.
+
+    config ESPOUT_LCD_DC_GPIO
+        int "LCD data/command GPIO (DC)"
+        default 21
+        range 0 23
+        help
+            GPIO connected to the LCD D/C pin.
+
+    config ESPOUT_LCD_CS_GPIO
+        int "LCD chip select GPIO (CS)"
+        default 10
+        range 0 23
+        help
+            GPIO connected to the LCD chip-select pin.
+
+    config ESPOUT_LCD_SCLK_GPIO
+        int "LCD SPI clock GPIO (CLK)"
+        default 7
+        range 0 23
+        help
+            GPIO connected to the LCD SPI clock line.
+
+    config ESPOUT_LCD_DIN_GPIO
+        int "LCD SPI data GPIO (DIN)"
+        default 3
+        range 0 23
+        help
+            GPIO connected to the LCD SPI DIN line.
+
+    config ESPOUT_IR_VCC_GPIO
+        int "IR receiver supply GPIO (VCC)"
+        default 4
+        range 0 23
+        help
+            GPIO used to switch or provide power for the IR receiver module.
+
+    config ESPOUT_IR_OUT_GPIO
+        int "IR receiver signal GPIO (OUT)"
+        default 5
+        range 0 23
+        help
+            GPIO connected to the IR receiver output signal.
+
+    config ESPOUT_IR_GND_RAIL
+        string "IR ground rail"
+        default "GND"
+        help
+            Ground reference used for the IR receiver module.
+
+    config ESPOUT_BUTTON_GPIO
+        int "Button GPIO"
+        default 6
+        range 0 23
+        help
+            GPIO connected to the user button.
+
+    config ESPOUT_BUTTON_GND_RAIL
+        string "Button ground rail"
+        default "GND"
+        help
+            Ground reference used for the user button.
+
+    config ESPOUT_POT_VCC_GPIO
+        int "Potentiometer supply GPIO"
+        default 0
+        range 0 23
+        help
+            GPIO connected to the potentiometer module supply input.
+
+    config ESPOUT_POT_GND_GPIO
+        int "Potentiometer ground GPIO"
+        default 1
+        range 0 23
+        help
+            GPIO connected to the potentiometer module ground input.
+
+    config ESPOUT_POT_ADC_GPIO
+        int "Potentiometer ADC GPIO"
+        default 2
+        range 0 23
+        help
+            GPIO connected to the potentiometer analog output.
+
+endmenu
