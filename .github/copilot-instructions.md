@@ -39,12 +39,6 @@ You must strictly adhere to the CMU C Coding Standard principles:
 - Always implement proper FreeRTOS tasks using `vTaskDelay` (e.g., `pdMS_TO_TICKS()`) instead of blocking delay loops.
 - Set appropriate stack sizes for FreeRTOS tasks (e.g., NimBLE operations might need larger stacks like `4096` bytes).
 
-### Hardware Driver Specifics
-- **SPI (ST7789V2 LCD):** Use the native `spi_master` driver. Optimize transactions. Keep display-only devices (write-only) with MISO set to `-1`.
-- **ADC (Potentiometer):** Use the modern ESP-IDF v5.x ADC Oneshot driver (`esp_adc/adc_oneshot.h`). Avoid deprecated legacy ADC APIs.
-- **Infrarot (RMT RX):** Use the modern RMT driver (`driver/rmt_rx.h`) with the built-in NEC decoder if analyzing IR signals.
-- **BLE (Philips Hue):** Use the resource-efficient **NimBLE** stack (`host/ble_hs.h`) rather than Bluedroid to save RAM and flash.
-
 ### Logging & Error Handling
 - Use the ESP-IDF logging library (`esp_log.h`). Define a static `const char *TAG` at the top of each file.
 - Use `ESP_LOGI`, `ESP_LOGW`, `ESP_LOGE`, and `ESP_LOGD` appropriately.
@@ -52,7 +46,16 @@ You must strictly adhere to the CMU C Coding Standard principles:
 
 ---
 
-## 4. Response Guidelines
+## 4. Hardware Pin Configuration via Kconfig
+
+To prevent pin duplication conflicts and maintain clean configuration boundaries, all GPIO and hardware pin mappings must be retrieved dynamically via ESP-IDF's Kconfig system (`src/Kconfig.projbuild`).
+
+- **Strict Prohibition of Hardcoded Pins:** Never define GPIO numbers directly in the code (e.g., do not generate `#define BUTTON_PIN 9` or direct raw numbers).
+- **SDK Config Usage:** Always include `"sdkconfig.h"` in source files where hardware is initialized. Use the automatically generated `CONFIG_` macros.
+
+---
+
+## 5. Response Guidelines
 - **Language:** Write the code and technical explanations in English.
 - **Clarity:** Keep explanations concise, directly addressing compiler/linker errors, hardware constraints, or pin-out mismatches.
 - **Completeness:** Ensure that code outputs compile successfully in PlatformIO without missing include guards or incomplete header definitions.
@@ -60,7 +63,7 @@ You must strictly adhere to the CMU C Coding Standard principles:
 
 ---
 
-## 5. Documentation Standards
+## 6. Documentation Standards
 All generated public and private functions must be documented with a clear Doxygen-style header block. Follow this structure:
 
 ```c
