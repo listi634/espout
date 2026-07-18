@@ -8,12 +8,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "esp_adc/adc_oneshot.h"
+#include "utils/app_config.h"
 #include "pot_adc.h"
 
 static const char *TAG = "MAIN_APP";
 
 void app_main(void) {
+    ESP_ERROR_CHECK(app_config_init());
+
     ESP_LOGI(TAG, "Booting Smarte Steuerzentrale Master Application Hub...");
 
     /* 1. Allocate shared ADC hardware peripheral instance unit safely at top layer */

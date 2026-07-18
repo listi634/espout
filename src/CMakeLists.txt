@@ -2,6 +2,7 @@ idf_component_register(
     SRCS 
         "main.c"
         "pot/pot_adc.c"
+        "utils/app_config.c"
     INCLUDE_DIRS 
         "."
         "app"
