@@ -3,6 +3,7 @@ idf_component_register(
         "main.c"
         "pot/pot_adc.c"
         "utils/app_config.c"
+        "button/button_handler.c"
     INCLUDE_DIRS 
         "."
         "app"
