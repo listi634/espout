@@ -1,15 +1,17 @@
 idf_component_register(
     SRCS 
         "main.c"
+        "button/button_handler.c"
+        "led/rgb_led.c"
         "pot/pot_adc.c"
         "utils/app_config.c"
-        "button/button_handler.c"
     INCLUDE_DIRS 
         "."
         "app"
-        "ir"
-        "pot"
         "button"
+        "ir"
         "lcd"
+        "led"
+        "pot"
         "utils"
 )

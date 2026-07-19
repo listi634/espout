@@ -108,4 +108,10 @@ menu "espout board configuration"
         help
             GPIO connected to the potentiometer analog output.
 
+    config ESPOUT_RGB_LED_GPIO
+        int "RGB LED GPIO Number"
+        default 8
+        help
+            GPIO number for the on-board WS2812B RGB LED (Default on ESP32-C6 DevKitC-1 is 8)
+
 endmenu
