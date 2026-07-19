@@ -68,4 +68,4 @@ esp_err_t pot_adc_deinit(pot_device_handle_t handle);
 }
 #endif
 
-#endif // POT_ADC_H
+#endif /* POT_ADC.H */

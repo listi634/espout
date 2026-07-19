@@ -2,6 +2,7 @@ idf_component_register(
     SRCS 
         "main.c"
         "button/button_handler.c"
+        "ir/ir_handler.c"
         "led/rgb_led.c"
         "pot/pot_adc.c"
         "utils/app_config.c"

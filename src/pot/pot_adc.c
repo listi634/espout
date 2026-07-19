@@ -8,7 +8,7 @@
 #include "esp_log.h"
 #include "esp_check.h"
 
-static const char *TAG = "POT_ADC";
+static const char *TAG = "POT";
 
 struct pot_device {
     adc_oneshot_unit_handle_t adc_handle;
