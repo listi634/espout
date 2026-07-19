@@ -31,11 +31,11 @@ typedef struct {
  * @brief Log whitelist config.
  */
 static const log_whitelist_entry_t log_whitelist[] = {
-    { "MAIN_APP",    ESP_LOG_INFO  },
-    { "POT_ADC",     ESP_LOG_INFO  },
-    { "BUTTON",      ESP_LOG_INFO  },
-    { "IR_RECEIVER", ESP_LOG_INFO  },
-    { "LCD_DRV",     ESP_LOG_INFO  } 
+    { "MAIN_APP",    ESP_LOG_DEBUG  },
+    { "POT_ADC",     ESP_LOG_DEBUG  },
+    { "BUTTON",      ESP_LOG_DEBUG  },
+    { "IR_RECEIVER", ESP_LOG_DEBUG  },
+    { "LCD_DRV",     ESP_LOG_DEBUG  } 
 };
 
 /**

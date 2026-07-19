@@ -48,6 +48,11 @@ void app_main(void) {
 
     /* main.c task can now sleep or process other components peacefully */
     while (1) {
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        ESP_LOGI(TAG, "Info Test");
+        ESP_LOGW(TAG, "Warning Test");
+        ESP_LOGE(TAG, "Error Test");
+        ESP_LOGD(TAG, "Debug Test");
+        ESP_LOGV(TAG, "Verbose Test");
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
