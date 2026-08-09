@@ -6,6 +6,8 @@ idf_component_register(
         "lcd/lcd_assets.c"
         "lcd/st7789.c"
         "led/rgb_led.c"
+        "lvgl/lvgl_display.c"
+        "lvgl/lvgl_ui.c"
         "pot/pot_adc.c"
         "utils/app_config.c"
     INCLUDE_DIRS 
@@ -16,6 +18,7 @@ idf_component_register(
         "lcd"
         "lcd/assets"
         "led"
+        "lvgl"
         "pot"
         "utils"
 )

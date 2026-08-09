@@ -51,7 +51,7 @@ static void IRAM_ATTR st7789_spi_pre_transfer_callback(spi_transaction_t *t) {
 /**
  * @brief Sends a command byte to the ST7789 controller.
  */
-static esp_err_t st7789_send_cmd(st7789_handle_t dev, uint8_t cmd) {
+esp_err_t st7789_send_cmd(st7789_handle_t dev, uint8_t cmd) {
     st7789_tx_context_t tx_ctx = {
         .dev = dev,
         .is_data = false,
@@ -69,7 +69,7 @@ static esp_err_t st7789_send_cmd(st7789_handle_t dev, uint8_t cmd) {
 /**
  * @brief Sends data bytes to the ST7789 controller via polling.
  */
-static esp_err_t st7789_send_data(st7789_handle_t dev,
+esp_err_t st7789_send_data(st7789_handle_t dev,
                                   const uint8_t *data,
                                   size_t len) {
     if (len == 0) {
@@ -93,7 +93,7 @@ static esp_err_t st7789_send_data(st7789_handle_t dev,
 /**
  * @brief Sets the memory window boundaries for incoming pixel data.
  */
-static esp_err_t st7789_set_window(st7789_handle_t dev,
+esp_err_t st7789_set_window(st7789_handle_t dev,
                                    uint16_t x1,
                                    uint16_t y1,
                                    uint16_t x2,
@@ -202,6 +202,7 @@ esp_err_t st7789_init(const st7789_config_t *config, st7789_handle_t *out_handle
     st7789_send_data(dev, &pixel_format, 1);
 
     st7789_send_cmd(dev, 0x36); /* Memory Data Access Control */
+    /* RGB color order, no rotation */
     const uint8_t madctl = 0x00;
     st7789_send_data(dev, &madctl, 1);
 
@@ -300,4 +301,20 @@ esp_err_t st7789_draw_image(st7789_handle_t handle,
     }
 
     return ESP_OK;
+}
+
+spi_device_handle_t st7789_get_spi_device(st7789_handle_t handle)
+{
+    if (handle == NULL) {
+        return NULL;
+    }
+    return handle->spi_dev;
+}
+
+int st7789_get_gpio_dc(st7789_handle_t handle)
+{
+    if (handle == NULL) {
+        return -1;
+    }
+    return handle->gpio_dc;
 }

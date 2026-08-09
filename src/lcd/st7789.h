@@ -83,4 +83,51 @@ esp_err_t st7789_draw_image(st7789_handle_t handle,
                             uint16_t y_start,
                             const lcd_image_t *image);
 
+/**
+ * @brief Gets the SPI device handle for direct access.
+ *
+ * @param[in] handle Display device handle.
+ * @return spi_device_handle_t The underlying SPI device handle.
+ */
+spi_device_handle_t st7789_get_spi_device(st7789_handle_t handle);
+
+/**
+ * @brief Gets the D/C GPIO number.
+ *
+ * @param[in] handle Display device handle.
+ * @return int The D/C GPIO number.
+ */
+int st7789_get_gpio_dc(st7789_handle_t handle);
+
+/**
+ * @brief Sends a command byte to the ST7789 controller.
+ *
+ * @param[in] handle Display device handle.
+ * @param[in] cmd Command byte to send.
+ * @return esp_err_t ESP_OK on success.
+ */
+esp_err_t st7789_send_cmd(st7789_handle_t handle, uint8_t cmd);
+
+/**
+ * @brief Sends data bytes to the ST7789 controller.
+ *
+ * @param[in] handle Display device handle.
+ * @param[in] data Pointer to data bytes.
+ * @param[in] len Number of bytes to send.
+ * @return esp_err_t ESP_OK on success.
+ */
+esp_err_t st7789_send_data(st7789_handle_t handle, const uint8_t *data, size_t len);
+
+/**
+ * @brief Sets the memory window boundaries for pixel data.
+ *
+ * @param[in] handle Display device handle.
+ * @param[in] x1 Starting X coordinate (0 to LCD_WIDTH - 1).
+ * @param[in] y1 Starting Y coordinate (0 to LCD_HEIGHT - 1).
+ * @param[in] x2 Ending X coordinate (0 to LCD_WIDTH - 1).
+ * @param[in] y2 Ending Y coordinate (0 to LCD_HEIGHT - 1).
+ * @return esp_err_t ESP_OK on success.
+ */
+esp_err_t st7789_set_window(st7789_handle_t handle, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+
 #endif /* ST7789_H */

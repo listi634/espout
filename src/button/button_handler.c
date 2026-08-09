@@ -9,6 +9,7 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_check.h"
+#include "esp_task_wdt.h"
 
 static const char *TAG = "BUTTON_DRIVER";
 
@@ -35,6 +36,16 @@ static void button_worker_task(void *pvParameters) {
     bool last_notified_state = false;
     uint32_t pressed_duration_ms = 0;
     bool long_press_triggered = false;
+    
+    /* Register this task with the task watchdog */
+    bool watchdog_registered = false;
+    esp_err_t ret = esp_task_wdt_add(NULL);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add button worker task to watchdog: %s",
+                 esp_err_to_name(ret));
+    } else {
+        watchdog_registered = true;
+    }
 
     while (dev->is_running) {
         /* Read physical logic layer input from the hardware register */
@@ -82,6 +93,9 @@ static void button_worker_task(void *pvParameters) {
             }
         }
 
+        if (watchdog_registered) {
+            esp_task_wdt_reset();
+        }
         vTaskDelay(pdMS_TO_TICKS(sample_period_ms));
     }
 

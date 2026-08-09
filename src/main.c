@@ -5,6 +5,8 @@
 #include "ir_config.h"
 #include "lcd/st7789.h"
 #include "lcd/lcd_assets.h"
+#include "lvgl/lvgl_display.h"
+#include "lvgl/lvgl_ui.h"
 #include "utils/app_config.h"
 
 static const char *TAG = "MAIN";
@@ -13,6 +15,11 @@ static const char *TAG = "MAIN";
  * @brief LCD display handle.
  */
 static st7789_handle_t g_lcd_handle = NULL;
+
+/**
+ * @brief LVGL display handle.
+ */
+static lv_display_t *g_lvgl_disp = NULL;
 
 /**
  * @brief Initializes the LCD display with configuration from Kconfig.
@@ -74,20 +81,14 @@ static esp_err_t lcd_display_test_image(const lcd_image_t *image)
 
 /**
  * @brief Application action layer processing identified key event codes.
+ *
+ * Handles IR events via LVGL UI updates.
  */
 static void main_ir_event_callback(ir_key_t key, const ir_lookup_entry_t *entry)
 {
-    switch (key) {
-        case IR_KEY_ON:
-            ESP_ERROR_CHECK(lcd_display_test_image(&g_lcd_img1));
-            ESP_LOGW(TAG, "Global Action: ON detected.");
-            break;
-        case IR_KEY_OFF:
-            ESP_ERROR_CHECK(lcd_display_test_image(&g_lcd_img2));
-            ESP_LOGI(TAG, "Global Action: OFF detected.");
-            break;
-        default:
-            break;
+    /* Update LVGL UI if initialized */
+    if (g_lvgl_disp != NULL) {
+        lvgl_ui_handle_ir_event(key, entry);
     }
 }
 
@@ -100,8 +101,22 @@ void app_main(void)
     /* Initialize LCD display */
     ESP_ERROR_CHECK(lcd_display_init());
 
-    /* Display test image */
-    ESP_ERROR_CHECK(lcd_display_test_image(&g_lcd_img1));
+    /* Initialize LVGL library first */
+    lv_init();
+
+    /* Initialize LVGL display driver */
+    g_lvgl_disp = lvgl_display_init(g_lcd_handle);
+    if (g_lvgl_disp == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize LVGL display driver");
+    } else {
+        /* Initialize LVGL UI */
+        esp_err_t ret = lvgl_ui_init(g_lvgl_disp);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to initialize LVGL UI: %s", esp_err_to_name(ret));
+            lvgl_display_deinit(g_lvgl_disp);
+            g_lvgl_disp = NULL;
+        }
+    }
 
     /* Initialize IR handler */
     size_t table_elements = sizeof(s_ir_profile_benq) / sizeof(s_ir_profile_benq[0]);
