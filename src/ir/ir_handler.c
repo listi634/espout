@@ -13,6 +13,7 @@
 #include "driver/rmt_rx.h"
 #include "esp_log.h"
 #include "esp_check.h"
+#include "esp_task_wdt.h"
 
 static const char *TAG = "IR";
 
@@ -102,6 +103,16 @@ static void ir_handler_task(void *pvParameters)
     /* Variables for software debouncing logic */
     ir_key_t last_valid_key = IR_KEY_UNKNOWN;
     TickType_t last_valid_key_time = 0;
+    
+    /* Register this task with the task watchdog */
+    bool watchdog_registered = false;
+    esp_err_t ret = esp_task_wdt_add(NULL);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add IR handler task to watchdog: %s",
+                 esp_err_to_name(ret));
+    } else {
+        watchdog_registered = true;
+    }
 
     rmt_receive_config_t receive_config = {
         .signal_range_min_ns = 1000,
@@ -112,7 +123,10 @@ static void ir_handler_task(void *pvParameters)
                                 sizeof(s_raw_symbols_buffer), &receive_config));
 
     while (1) {
-        if (xQueueReceive(s_ir_rx_queue, &rx_event_data, portMAX_DELAY) == pdTRUE) {
+        if (xQueueReceive(s_ir_rx_queue, &rx_event_data, pdMS_TO_TICKS(500)) == pdTRUE) {
+            if (watchdog_registered) {
+                esp_task_wdt_reset();
+            }
             uint32_t decoded_hex = ir_parse_rmt_to_nec(rx_event_data.received_symbols, 
                                                        rx_event_data.num_symbols);
 
@@ -150,6 +164,11 @@ static void ir_handler_task(void *pvParameters)
 
             ESP_ERROR_CHECK(rmt_receive(rx_channel, s_raw_symbols_buffer, 
                                         sizeof(s_raw_symbols_buffer), &receive_config));
+        } else {
+            /* Queue timeout - feed watchdog periodically even when no IR events */
+            if (watchdog_registered) {
+                esp_task_wdt_reset();
+            }
         }
     }
 }

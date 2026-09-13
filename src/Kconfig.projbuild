@@ -127,4 +127,21 @@ menu "espout board configuration"
         help
             GPIO number for the on-board WS2812B RGB LED (Default on ESP32-C6 DevKitC-1 is 8)
 
+    config ESPOUT_LVGL_USE_PSRAM
+        bool "Use PSRAM for LVGL buffers"
+        default n
+        help
+            Enable to use PSRAM for LVGL display buffers. Required if your
+            display resolution or color depth requires more memory than
+            available in internal RAM.
+
+    config ESPOUT_LVGL_BUFFER_SIZE
+        int "LVGL buffer size in pixels"
+        default 2400
+        range 100 10000
+        help
+            Size of the LVGL draw buffer in pixels. Larger values use more
+            memory but improve performance. For 240x280 display, 2400 pixels
+            (20 rows) is a good starting point.
+
 endmenu
