@@ -2,6 +2,7 @@ idf_component_register(
     SRCS 
         "main.c"
         "button/button_handler.c"
+        "buzzer/buzzer.c"
         "ir/ir_handler.c"
         "lcd/lcd_assets.c"
         "lcd/st7789.c"
@@ -12,6 +13,8 @@ idf_component_register(
         "."
         "app"
         "button"
+        "buzzer"
+        "buzzer/assets"
         "ir"
         "lcd"
         "lcd/assets"

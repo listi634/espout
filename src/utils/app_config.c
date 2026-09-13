@@ -35,7 +35,8 @@ static const log_whitelist_entry_t log_whitelist[] = {
     { "POT",     ESP_LOG_DEBUG  },
     { "BUTTON",  ESP_LOG_DEBUG  },
     { "IR",      ESP_LOG_DEBUG  },
-    { "LCD",     ESP_LOG_DEBUG  } 
+    { "LCD",     ESP_LOG_DEBUG  },
+    { "BUZZER",  ESP_LOG_DEBUG  }
 };
 
 /**

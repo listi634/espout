@@ -108,6 +108,19 @@ menu "espout board configuration"
         help
             GPIO connected to the potentiometer analog output.
 
+    config ESPOUT_BUZZER_GPIO
+        int "Passive Buzzer PWM GPIO"
+        default 18
+        range 0 23
+        help
+            GPIO connected to the passive electromagnetic buzzer signal pin.
+
+    config ESPOUT_BUZZER_GND_RAIL
+        string "Buzzer ground rail"
+        default "GND"
+        help
+            Ground reference used for the passive buzzer module.
+
     config ESPOUT_RGB_LED_GPIO
         int "RGB LED GPIO Number"
         default 8
