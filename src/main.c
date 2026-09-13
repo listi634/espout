@@ -4,10 +4,14 @@
 #include "ir_handler.h"
 #include "ir_config.h"
 #include "lcd/st7789.h"
-#include "lcd/lcd_assets.h"
+#include "led/rgb_led.h"
 #include "lvgl/lvgl_display.h"
 #include "lvgl/lvgl_ui.h"
 #include "utils/app_config.h"
+#include "app/event_bus/event_bus.h"
+#include "app/state/app_state.h"
+#include "app/actions/action_handler.h"
+#include "app/ui/ui_controller.h"
 
 static const char *TAG = "MAIN";
 
@@ -30,7 +34,7 @@ static esp_err_t lcd_display_init(void)
 {
     st7789_config_t lcd_config = {
         .spi_host = SPI2_HOST,
-        .clock_speed_hz = 10 * 1000 * 1000,  /* 10 MHz */
+        .clock_speed_hz = 10 * 1000 * 1000,
         .gpio_mosi = CONFIG_ESPOUT_LCD_DIN_GPIO,
         .gpio_clk = CONFIG_ESPOUT_LCD_SCLK_GPIO,
         .gpio_cs = CONFIG_ESPOUT_LCD_CS_GPIO,
@@ -50,46 +54,18 @@ static esp_err_t lcd_display_init(void)
 }
 
 /**
- * @brief Displays the test image on the LCD screen.
- *
- * @return esp_err_t ESP_OK on success, or appropriate error code.
+ * @brief IR event callback that publishes to event bus.
  */
-static esp_err_t lcd_display_test_image(const lcd_image_t *image)
+static void ir_event_publisher(ir_key_t key, const ir_lookup_entry_t *entry)
 {
-    if (g_lcd_handle == NULL) {
-        ESP_LOGE(TAG, "LCD not initialized");
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    /* Clear screen with black color */
-    esp_err_t ret = st7789_clear(g_lcd_handle, 0x0000);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to clear LCD: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    /* Draw test image at top-left corner (0, 0) */
-    ret = st7789_draw_image(g_lcd_handle, 0, 0, image);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to draw test image: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
-    ESP_LOGI(TAG, "Test image displayed successfully");
-    return ESP_OK;
-}
-
-/**
- * @brief Application action layer processing identified key event codes.
- *
- * Handles IR events via LVGL UI updates.
- */
-static void main_ir_event_callback(ir_key_t key, const ir_lookup_entry_t *entry)
-{
-    /* Update LVGL UI if initialized */
-    if (g_lvgl_disp != NULL) {
-        lvgl_ui_handle_ir_event(key, entry);
-    }
+    app_event_t event = {
+        .type = EVENT_IR_KEY_PRESSED,
+        .data.ir = {
+            .key = key,
+            .entry = entry
+        }
+    };
+    event_bus_publish(&event);
 }
 
 void app_main(void)
@@ -98,8 +74,9 @@ void app_main(void)
 
     ESP_LOGI(TAG, "Starting Master Hub Application...");
 
-    /* Initialize LCD display */
+    /* Initialize Components */
     ESP_ERROR_CHECK(lcd_display_init());
+    ESP_ERROR_CHECK(rgb_led_init());
 
     /* Initialize LVGL library first */
     lv_init();
@@ -108,17 +85,39 @@ void app_main(void)
     g_lvgl_disp = lvgl_display_init(g_lcd_handle);
     if (g_lvgl_disp == NULL) {
         ESP_LOGE(TAG, "Failed to initialize LVGL display driver");
-    } else {
-        /* Initialize LVGL UI */
-        esp_err_t ret = lvgl_ui_init(g_lvgl_disp);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to initialize LVGL UI: %s", esp_err_to_name(ret));
-            lvgl_display_deinit(g_lvgl_disp);
-            g_lvgl_disp = NULL;
-        }
+        return;
     }
 
-    /* Initialize IR handler */
+    /* Initialize LVGL UI */
+    esp_err_t ret = lvgl_ui_init(g_lvgl_disp);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize LVGL UI: %s", esp_err_to_name(ret));
+        lvgl_display_deinit(g_lvgl_disp);
+        g_lvgl_disp = NULL;
+        return;
+    }
+
+    /* Initialize Application Layer */
+    ESP_ERROR_CHECK(event_bus_init());
+    app_state_init();
+    ESP_ERROR_CHECK(action_handler_init());
+    ESP_ERROR_CHECK(ui_controller_init());
+
+    /* Subscribe action handler to hardware events */
+    app_event_type_t action_events[] = {
+        EVENT_IR_KEY_PRESSED,
+        EVENT_BUTTON_PRESSED,
+        EVENT_BUTTON_LONG_PRESSED,
+        EVENT_POTENTIOMETER_CHANGED
+    };
+    event_bus_subscribe(
+        action_events,
+        sizeof(action_events) / sizeof(action_events[0]),
+        action_handler_process_event);
+
+    /* Initialize IR handler with event publishing */
     size_t table_elements = sizeof(s_ir_profile_benq) / sizeof(s_ir_profile_benq[0]);
-    ESP_ERROR_CHECK(ir_handler_init(s_ir_profile_benq, table_elements, main_ir_event_callback));
+    ESP_ERROR_CHECK(ir_handler_init(s_ir_profile_benq, table_elements, ir_event_publisher));
+
+    ESP_LOGI(TAG, "Application started successfully");
 }
