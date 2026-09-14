@@ -18,6 +18,11 @@
 static const char *TAG = "LVGL_DISPLAY";
 
 /**
+ * @brief Global display instance pointer.
+ */
+static lv_display_t *s_display_instance = NULL;
+
+/**
  * @brief Custom tick source for LVGL using ESP32 system timer.
  */
 static uint32_t custom_tick_get_cb(void)
@@ -178,9 +183,16 @@ lv_display_t *lvgl_display_init(st7789_handle_t st7789_handle)
     /* Set as default display */
     lv_display_set_default(disp);
 
+    s_display_instance = disp;
+
     ESP_LOGI(TAG, "LVGL display driver initialized successfully (W=%d, H=%d)",
              LCD_WIDTH, LCD_HEIGHT);
     return disp;
+}
+
+lv_display_t *lvgl_display_get_instance(void)
+{
+    return s_display_instance;
 }
 
 esp_err_t lvgl_display_deinit(lv_display_t *disp)
@@ -198,6 +210,12 @@ esp_err_t lvgl_display_deinit(lv_display_t *disp)
     }
 
     lv_display_delete(disp);
+    
+    // Clear the instance pointer if this is the current instance
+    if (s_display_instance == disp) {
+        s_display_instance = NULL;
+    }
+    
     return ESP_OK;
 }
 

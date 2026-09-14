@@ -6,7 +6,6 @@
 #include "lcd/st7789.h"
 #include "led/rgb_led.h"
 #include "lvgl/lvgl_display.h"
-#include "lvgl/lvgl_ui.h"
 #include "utils/app_config.h"
 #include "app/event_bus/event_bus.h"
 #include "app/state/app_state.h"
@@ -78,22 +77,10 @@ void app_main(void)
     ESP_ERROR_CHECK(lcd_display_init());
     ESP_ERROR_CHECK(rgb_led_init());
 
-    /* Initialize LVGL library first */
-    lv_init();
-
-    /* Initialize LVGL display driver */
+    /* Initialize LVGL display driver (lv_init() is called internally) */
     g_lvgl_disp = lvgl_display_init(g_lcd_handle);
     if (g_lvgl_disp == NULL) {
         ESP_LOGE(TAG, "Failed to initialize LVGL display driver");
-        return;
-    }
-
-    /* Initialize LVGL UI */
-    esp_err_t ret = lvgl_ui_init(g_lvgl_disp);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize LVGL UI: %s", esp_err_to_name(ret));
-        lvgl_display_deinit(g_lvgl_disp);
-        g_lvgl_disp = NULL;
         return;
     }
 

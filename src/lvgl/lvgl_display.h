@@ -19,6 +19,13 @@
 lv_display_t *lvgl_display_init(st7789_handle_t st7789_handle);
 
 /**
+ * @brief Get the current LVGL display instance.
+ *
+ * @return lv_display_t* Pointer to the current LVGL display driver, or NULL.
+ */
+lv_display_t *lvgl_display_get_instance(void);
+
+/**
  * @brief Deinitializes LVGL display driver.
  *
  * @param[in] disp LVGL display driver to deinitialize.
