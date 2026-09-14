@@ -7,7 +7,6 @@
 #define APP_EVENT_TYPES_H
 
 #include <stdint.h>
-#include "ir_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,7 +16,6 @@ extern "C" {
  * @brief Application event types.
  */
 typedef enum {
-    EVENT_IR_KEY_PRESSED,
     EVENT_FUNCTION_CHANGED,
 } app_event_type_t;
 
@@ -27,13 +25,6 @@ typedef enum {
 typedef struct {
     app_event_type_t type;
 
-    union {
-        struct {
-            ir_key_t key;
-            const ir_lookup_entry_t *entry;
-        } ir;
-
-    } data;
 } app_event_t;
 
 #ifdef __cplusplus

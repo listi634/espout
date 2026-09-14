@@ -7,6 +7,7 @@
 #define UI_CONTROLLER_H
 
 #include "esp_err.h"
+#include "buzzer/buzzer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,7 +20,7 @@ extern "C" {
  * 
  * @return esp_err_t ESP_OK on success, error code on failure.
  */
-esp_err_t ui_controller_init(void);
+esp_err_t ui_controller_init(buzzer_handle_t buzzer);
 
 /**
  * @brief Deinitialize the UI controller.

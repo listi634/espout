@@ -39,8 +39,12 @@ static void ui_event_handler(const app_event_t *event)
     screen_manager_distribute_event(event);
 }
 
-esp_err_t ui_controller_init(void)
+esp_err_t ui_controller_init(buzzer_handle_t buzzer)
 {
+    if (buzzer == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
     // Initialize screen manager first
     esp_err_t ret = screen_manager_init();
     if (ret != ESP_OK) {
@@ -49,7 +53,7 @@ esp_err_t ui_controller_init(void)
     }
 
     // Initialize main screen
-    ret = main_screen_init();
+    ret = main_screen_init(buzzer);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize main screen: %s", esp_err_to_name(ret));
         screen_manager_deinit();

@@ -135,6 +135,12 @@ void screen_manager_process_updates(void);
  */
 void screen_manager_distribute_event(const app_event_t *event);
 
+/**
+ * @brief Dispatch hardware input to the currently active screen only.
+ * @param event Input event to dispatch.
+ */
+void screen_manager_dispatch_input(const app_input_event_t *event);
+
 #ifdef __cplusplus
 }
 #endif

@@ -33,19 +33,62 @@ typedef struct {
 static const log_whitelist_entry_t log_whitelist[] = {
     { "MAIN",           ESP_LOG_DEBUG  },
     { "POT",            ESP_LOG_DEBUG  },
+    { "POT_MONITOR",    ESP_LOG_DEBUG  },
     { "BUTTON",         ESP_LOG_DEBUG  },
     { "IR",             ESP_LOG_DEBUG  },
+    { "INPUT_MANAGER",  ESP_LOG_DEBUG  },
     { "LCD",            ESP_LOG_DEBUG  },
     { "LVGL_DISPLAY",   ESP_LOG_DEBUG  },
     { "MAIN_SCREEN",    ESP_LOG_DEBUG  },
     { "SCREEN_MANAGER", ESP_LOG_DEBUG  },
     { "APP_STATE",      ESP_LOG_DEBUG  },
-    { "ACTION_HANDLER", ESP_LOG_DEBUG  },
     { "UI_CONTROLLER",  ESP_LOG_DEBUG  },
     { "EVENT_BUS",      ESP_LOG_DEBUG  },
     { "RGB_LED",        ESP_LOG_DEBUG  },
     { "BUZZER",         ESP_LOG_DEBUG  }
 };
+
+typedef struct {
+    const char *name;
+    int gpio;
+} gpio_assignment_t;
+
+static esp_err_t validate_gpio_assignments(void)
+{
+    const gpio_assignment_t assignments[] = {
+        { "LCD backlight", CONFIG_ESPOUT_LCD_BACKLIGHT_GPIO },
+        { "LCD reset", CONFIG_ESPOUT_LCD_RESET_GPIO },
+        { "LCD DC", CONFIG_ESPOUT_LCD_DC_GPIO },
+        { "LCD CS", CONFIG_ESPOUT_LCD_CS_GPIO },
+        { "LCD clock", CONFIG_ESPOUT_LCD_SCLK_GPIO },
+        { "LCD data", CONFIG_ESPOUT_LCD_DIN_GPIO },
+        { "IR VCC", CONFIG_ESPOUT_IR_VCC_GPIO },
+        { "IR signal", CONFIG_ESPOUT_IR_OUT_GPIO },
+        { "button", CONFIG_ESPOUT_BUTTON_GPIO },
+        { "potentiometer VCC", CONFIG_ESPOUT_POT_VCC_GPIO },
+        { "potentiometer GND", CONFIG_ESPOUT_POT_GND_GPIO },
+        { "potentiometer ADC", CONFIG_ESPOUT_POT_ADC_GPIO },
+        { "buzzer", CONFIG_ESPOUT_BUZZER_GPIO },
+        { "RGB LED", CONFIG_ESPOUT_RGB_LED_GPIO }
+    };
+    const size_t assignment_count =
+        sizeof(assignments) / sizeof(assignments[0]);
+
+    for (size_t first = 0; first < assignment_count; first++) {
+        for (size_t second = first + 1; second < assignment_count; second++) {
+            if (assignments[first].gpio == assignments[second].gpio) {
+                ESP_LOGE(TAG,
+                         "Hardware conflict: %s and %s share GPIO %d",
+                         assignments[first].name,
+                         assignments[second].name,
+                         assignments[first].gpio);
+                return ESP_ERR_INVALID_ARG;
+            }
+        }
+    }
+
+    return ESP_OK;
+}
 
 /**
  * @brief Helper function to route formatted strings safely through the vprintf pipe.
@@ -127,14 +170,5 @@ esp_err_t app_config_init(void) {
 
     ESP_LOGI(TAG, "Runtime logging whitelist matrix parsed successfully.");
 
-    /* Validate basic configuration constraints from Kconfig at runtime */
-    #if defined(CONFIG_ESPOUT_POT_ADC_GPIO) && defined(CONFIG_ESPOUT_BUTTON_GPIO)
-    if (CONFIG_ESPOUT_POT_ADC_GPIO == CONFIG_ESPOUT_BUTTON_GPIO) {
-        ESP_LOGE(TAG, "Hardware Conflict: Potentiometer and Button share GPIO %d!", 
-                 CONFIG_ESPOUT_BUTTON_GPIO);
-        return ESP_ERR_INVALID_ARG;
-    }
-    #endif
-
-    return ESP_OK;
+    return validate_gpio_assignments();
 }

@@ -11,6 +11,7 @@
 #include "esp_err.h"
 #include "screen.h"
 #include "../../state/app_state.h"
+#include "../../../buzzer/buzzer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,7 +24,7 @@ extern "C" {
  * 
  * @return esp_err_t ESP_OK on success, error code on failure.
  */
-esp_err_t main_screen_init(void);
+esp_err_t main_screen_init(buzzer_handle_t buzzer);
 
 /**
  * @brief Update the selected function on the main screen.

@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "ir_handler.h"
 #include "ir_config.h"
 #include "lcd/st7789.h"
 #include "lvgl/lvgl_display.h"
 #include "utils/app_config.h"
 #include "app/event_bus/event_bus.h"
 #include "app/state/app_state.h"
-#include "app/actions/action_handler.h"
+#include "app/input/input_manager.h"
 #include "app/ui/ui_controller.h"
 #include "buzzer/buzzer.h"
 
@@ -57,21 +56,6 @@ static esp_err_t lcd_display_init(void)
     return ESP_OK;
 }
 
-/**
- * @brief IR event callback that publishes to event bus.
- */
-static void ir_event_publisher(ir_key_t key, const ir_lookup_entry_t *entry)
-{
-    app_event_t event = {
-        .type = EVENT_IR_KEY_PRESSED,
-        .data.ir = {
-            .key = key,
-            .entry = entry
-        }
-    };
-    event_bus_publish(&event);
-}
-
 void app_main(void)
 {
     ESP_ERROR_CHECK(app_config_init());
@@ -96,21 +80,10 @@ void app_main(void)
         .channel = LEDC_CHANNEL_0
     };
     ESP_ERROR_CHECK(buzzer_init(&g_buzzer_handle, &buzzer_config));
-    ESP_ERROR_CHECK(action_handler_init(g_buzzer_handle));
-    ESP_ERROR_CHECK(ui_controller_init());
-
-    /* Subscribe action handler to hardware events */
-    app_event_type_t action_events[] = {
-        EVENT_IR_KEY_PRESSED
-    };
-    event_bus_subscribe(
-        action_events,
-        sizeof(action_events) / sizeof(action_events[0]),
-        action_handler_process_event);
-
-    /* Initialize IR handler with event publishing */
-    size_t table_elements = sizeof(s_ir_profile_benq) / sizeof(s_ir_profile_benq[0]);
-    ESP_ERROR_CHECK(ir_handler_init(s_ir_profile_benq, table_elements, ir_event_publisher));
+    ESP_ERROR_CHECK(ui_controller_init(g_buzzer_handle));
+    const size_t table_elements =
+        sizeof(s_ir_profile_benq) / sizeof(s_ir_profile_benq[0]);
+    ESP_ERROR_CHECK(input_manager_init(s_ir_profile_benq, table_elements));
 
     ESP_LOGI(TAG, "Application started successfully");
 }

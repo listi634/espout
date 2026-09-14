@@ -12,6 +12,7 @@
 #include "esp_err.h"
 #include "lvgl.h"
 #include "app/event_bus/event_types.h"
+#include "app/input/input_event.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,6 +93,12 @@ typedef struct screen_t {
      * @param event The event to handle.
      */
     void (*on_event)(const app_event_t *event);
+
+    /**
+     * @brief Optional callback for hardware input directed to this screen.
+     * @param event Input event from the application input manager.
+     */
+    void (*on_input)(const app_input_event_t *event);
     
     /**
      * @brief Optional callback for periodic updates (e.g., animations).

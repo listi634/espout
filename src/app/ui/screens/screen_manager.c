@@ -284,3 +284,16 @@ void screen_manager_distribute_event(const app_event_t *event)
         }
     }
 }
+
+void screen_manager_dispatch_input(const app_input_event_t *event)
+{
+    if (!s_state.initialized || event == NULL ||
+        s_state.current_screen == SCREEN_NONE) {
+        return;
+    }
+
+    screen_t *screen = s_state.screens[s_state.current_screen];
+    if (screen != NULL && screen->on_input != NULL) {
+        screen->on_input(event);
+    }
+}
