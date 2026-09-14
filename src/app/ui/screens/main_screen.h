@@ -2,8 +2,7 @@
  * @file main_screen.h
  * @brief Main screen interface for the application.
  * 
- * This screen displays the primary UI with power status, brightness controls,
- * and other main application widgets.
+ * This screen displays the selectable application functions.
  */
 
 #ifndef MAIN_SCREEN_H
@@ -11,6 +10,7 @@
 
 #include "esp_err.h"
 #include "screen.h"
+#include "../../state/app_state.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,22 +26,13 @@ extern "C" {
 esp_err_t main_screen_init(void);
 
 /**
- * @brief Update the brightness display on the main screen.
- * 
+ * @brief Update the selected function on the main screen.
+ *
  * Thread-safe update via queue.
- * 
- * @param value Brightness percentage (0-100).
+ *
+ * @param function Function to display in the middle position.
  */
-void main_screen_update_brightness(int value);
-
-/**
- * @brief Update the power status display on the main screen.
- * 
- * Thread-safe update via queue.
- * 
- * @param is_on true if power is on, false if off.
- */
-void main_screen_update_power_status(bool is_on);
+void main_screen_update_selection(app_function_t function);
 
 /**
  * @brief Get the main screen's LVGL screen object.

@@ -7,32 +7,25 @@
 #define APP_STATE_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * @brief System operation modes.
+ * @brief Selectable functions on the main screen.
  */
 typedef enum {
-    MODE_MANUAL = 0,
-    MODE_AUTOMATIC,
-    MODE_DEMO,
-    MODE_COUNT
-} system_mode_t;
+    APP_FUNCTION_SETTINGS = 0,
+    APP_FUNCTION_WEATHER,
+    APP_FUNCTION_COUNT
+} app_function_t;
 
 /**
  * @brief Application state structure.
  */
 typedef struct {
-    bool power_on;
-    int brightness;
-    uint8_t led_red;
-    uint8_t led_green;
-    uint8_t led_blue;
-    system_mode_t mode;
+    app_function_t selected_function;
 } app_state_t;
 
 /**
@@ -48,38 +41,12 @@ void app_state_init(void);
 const app_state_t *app_state_get(void);
 
 /**
- * @brief Set power state.
+ * @brief Set the selected main-screen function.
  *
- * @param is_on true to turn on, false to turn off.
+ * @param function The function to select.
  * @return true if state changed, false if no change.
  */
-bool app_state_set_power(bool is_on);
-
-/**
- * @brief Set brightness value.
- *
- * @param value Brightness percentage (0-100).
- * @return true if state changed, false if no change.
- */
-bool app_state_set_brightness(int value);
-
-/**
- * @brief Set LED RGB color.
- *
- * @param red Red component (0-255).
- * @param green Green component (0-255).
- * @param blue Blue component (0-255).
- * @return true if state changed, false if no change.
- */
-bool app_state_set_led_color(uint8_t red, uint8_t green, uint8_t blue);
-
-/**
- * @brief Set system operation mode.
- *
- * @param mode The new system mode.
- * @return true if state changed, false if no change.
- */
-bool app_state_set_mode(system_mode_t mode);
+bool app_state_set_selected_function(app_function_t function);
 
 #ifdef __cplusplus
 }

@@ -4,13 +4,13 @@
 #include "ir_handler.h"
 #include "ir_config.h"
 #include "lcd/st7789.h"
-#include "led/rgb_led.h"
 #include "lvgl/lvgl_display.h"
 #include "utils/app_config.h"
 #include "app/event_bus/event_bus.h"
 #include "app/state/app_state.h"
 #include "app/actions/action_handler.h"
 #include "app/ui/ui_controller.h"
+#include "buzzer/buzzer.h"
 
 static const char *TAG = "MAIN";
 
@@ -23,6 +23,11 @@ static st7789_handle_t g_lcd_handle = NULL;
  * @brief LVGL display handle.
  */
 static lv_display_t *g_lvgl_disp = NULL;
+
+/**
+ * @brief Passive buzzer handle.
+ */
+static buzzer_handle_t g_buzzer_handle = NULL;
 
 /**
  * @brief Initializes the LCD display with configuration from Kconfig.
@@ -75,8 +80,6 @@ void app_main(void)
 
     /* Initialize Components */
     ESP_ERROR_CHECK(lcd_display_init());
-    ESP_ERROR_CHECK(rgb_led_init());
-
     /* Initialize LVGL display driver (lv_init() is called internally) */
     g_lvgl_disp = lvgl_display_init(g_lcd_handle);
     if (g_lvgl_disp == NULL) {
@@ -87,15 +90,18 @@ void app_main(void)
     /* Initialize Application Layer */
     ESP_ERROR_CHECK(event_bus_init());
     app_state_init();
-    ESP_ERROR_CHECK(action_handler_init());
+    const buzzer_config_t buzzer_config = {
+        .gpio_num = CONFIG_ESPOUT_BUZZER_GPIO,
+        .timer_num = LEDC_TIMER_0,
+        .channel = LEDC_CHANNEL_0
+    };
+    ESP_ERROR_CHECK(buzzer_init(&g_buzzer_handle, &buzzer_config));
+    ESP_ERROR_CHECK(action_handler_init(g_buzzer_handle));
     ESP_ERROR_CHECK(ui_controller_init());
 
     /* Subscribe action handler to hardware events */
     app_event_type_t action_events[] = {
-        EVENT_IR_KEY_PRESSED,
-        EVENT_BUTTON_PRESSED,
-        EVENT_BUTTON_LONG_PRESSED,
-        EVENT_POTENTIOMETER_CHANGED
+        EVENT_IR_KEY_PRESSED
     };
     event_bus_subscribe(
         action_events,

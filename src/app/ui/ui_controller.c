@@ -23,8 +23,7 @@ static void state_change_handler(const app_event_t *event)
     (void)event;
     const app_state_t *state = app_state_get();
 
-    main_screen_update_power_status(state->power_on);
-    main_screen_update_brightness(state->brightness);
+    main_screen_update_selection(state->selected_function);
 }
 
 /**
@@ -58,10 +57,7 @@ esp_err_t ui_controller_init(void)
     }
 
     // Subscribe to state change events
-    app_event_type_t ui_events[] = {
-        EVENT_POWER_CHANGED,
-        EVENT_BRIGHTNESS_CHANGED
-    };
+    app_event_type_t ui_events[] = {EVENT_FUNCTION_CHANGED};
 
     ret = event_bus_subscribe(
         ui_events, sizeof(ui_events) / sizeof(ui_events[0]),

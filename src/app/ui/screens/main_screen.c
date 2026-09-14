@@ -2,12 +2,13 @@
  * @file main_screen.c
  * @brief Main screen implementation for the application.
  * 
- * This screen displays the primary UI with power status, brightness controls.
+ * This screen displays the selectable application functions.
  */
 
 #include "main_screen.h"
 #include "screen.h"
 #include "screen_manager.h"
+#include "../../../lcd/st7789.h"
 #include "../../lvgl/lvgl_display.h"
 #include "esp_log.h"
 #include "esp_task_wdt.h"
@@ -22,28 +23,16 @@ static const char *TAG = "MAIN_SCREEN";
  */
 typedef struct {
     lv_obj_t *screen;
-    lv_obj_t *power_label;
-    lv_obj_t *brightness_label;
-    lv_obj_t *brightness_bar;
+    lv_obj_t *function_containers[APP_FUNCTION_COUNT];
+    lv_obj_t *function_icons[APP_FUNCTION_COUNT];
+    lv_obj_t *function_labels[APP_FUNCTION_COUNT];
 } main_screen_widgets_t;
-
-/**
- * @brief Update message types for the queue.
- */
-typedef enum {
-    MAIN_SCREEN_UPDATE_BRIGHTNESS,
-    MAIN_SCREEN_UPDATE_POWER
-} main_screen_update_type_t;
 
 /**
  * @brief Update message structure.
  */
 typedef struct {
-    main_screen_update_type_t type;
-    union {
-        int brightness;
-        bool power_on;
-    } data;
+    app_function_t selected_function;
 } main_screen_update_t;
 
 // Static variables
@@ -58,6 +47,7 @@ static esp_err_t activate_main_screen(void);
 static esp_err_t deactivate_main_screen(void);
 static esp_err_t destroy_main_screen(void);
 static void process_pending_updates(void);
+static void render_selection(app_function_t selected_function);
 
 /**
  * @brief LVGL timer handler task.
@@ -96,35 +86,33 @@ static void process_pending_updates(void)
     main_screen_update_t update;
 
     while (xQueueReceive(s_update_queue, &update, 0) == pdTRUE) {
-        if (update.type == MAIN_SCREEN_UPDATE_BRIGHTNESS) {
-            int value = update.data.brightness;
-            if (value < 0) value = 0;
-            if (value > 100) value = 100;
+        render_selection(update.selected_function);
+    }
+}
 
-            if (s_widgets.brightness_label != NULL) {
-                lv_label_set_text_fmt(s_widgets.brightness_label,
-                                      "Brightness: %d%%", value);
-                lv_obj_invalidate(s_widgets.brightness_label);
-            }
-            if (s_widgets.brightness_bar != NULL) {
-                lv_bar_set_value(s_widgets.brightness_bar, value,
-                                 LV_ANIM_OFF);
-                lv_obj_invalidate(s_widgets.brightness_bar);
-            }
-        } else if (update.type == MAIN_SCREEN_UPDATE_POWER) {
-            if (s_widgets.power_label != NULL) {
-                if (update.data.power_on) {
-                    lv_label_set_text(s_widgets.power_label, "Power: ON");
-                    lv_obj_set_style_text_color(
-                        s_widgets.power_label, lv_color_hex(0x4CAF50), 0);
-                } else {
-                    lv_label_set_text(s_widgets.power_label, "Power: OFF");
-                    lv_obj_set_style_text_color(
-                        s_widgets.power_label, lv_color_hex(0xFF4444), 0);
-                }
-                lv_obj_invalidate(s_widgets.power_label);
-            }
-        }
+static void render_selection(app_function_t selected_function)
+{
+    static const char *icons[APP_FUNCTION_COUNT] = {
+        LV_SYMBOL_SETTINGS,
+        LV_SYMBOL_CHARGE
+    };
+
+    if (selected_function < 0 || selected_function >= APP_FUNCTION_COUNT) {
+        return;
+    }
+
+    for (int index = 0; index < APP_FUNCTION_COUNT; index++) {
+        bool is_selected = index == selected_function;
+        int y_position = is_selected ? 105 :
+                         (selected_function == APP_FUNCTION_SETTINGS ? 185 : 25);
+
+        lv_obj_set_y(s_widgets.function_containers[index], y_position);
+        lv_obj_set_style_opa(s_widgets.function_containers[index],
+                             is_selected ? LV_OPA_COVER : LV_OPA_50, 0);
+        lv_obj_set_style_text_color(s_widgets.function_icons[index],
+                                    is_selected ? lv_color_hex(0xFFFFFF) :
+                                    lv_color_hex(0x8A8F98), 0);
+        lv_label_set_text(s_widgets.function_icons[index], icons[index]);
     }
 }
 
@@ -159,65 +147,23 @@ static esp_err_t create_main_screen(lv_obj_t *parent)
     }
     lv_obj_set_size(s_widgets.screen, LCD_WIDTH, LCD_HEIGHT);
     lv_obj_set_style_bg_color(s_widgets.screen, lv_color_hex(0x000000), 0);
-    lv_obj_set_layout(s_widgets.screen, LV_LAYOUT_FLEX);
-    lv_obj_set_flex_flow(s_widgets.screen, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(s_widgets.screen,
-                          LV_FLEX_ALIGN_SPACE_EVENLY,
-                          LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_all(s_widgets.screen, 10, 0);
+    for (int index = 0; index < APP_FUNCTION_COUNT; index++) {
+        lv_obj_t *container = lv_obj_create(s_widgets.screen);
+        s_widgets.function_containers[index] = container;
+        lv_obj_set_size(container, 70, 70);
+        lv_obj_set_x(container, LCD_WIDTH/2 - 35);
+        lv_obj_set_style_bg_color(container, lv_color_hex(0x20242B), 0);
+        lv_obj_set_style_border_width(container, 0, 0);
+        lv_obj_set_style_radius(container, 12, 0);
+        lv_obj_set_style_pad_all(container, 8, 0);
 
-    lv_obj_t *top_container = lv_obj_create(s_widgets.screen);
-    lv_obj_set_size(top_container, LV_PCT(100), LV_PCT(30));
-    lv_obj_set_layout(top_container, LV_LAYOUT_FLEX);
-    lv_obj_set_flex_flow(top_container, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(top_container,
-                          LV_FLEX_ALIGN_SPACE_BETWEEN,
-                          LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_bg_color(top_container, lv_color_hex(0x333333), 0);
-    lv_obj_set_style_bg_opa(top_container, LV_OPA_80, 0);
-    lv_obj_set_style_border_width(top_container, 0, 0);
-    lv_obj_set_style_radius(top_container, 5, 0);
-    lv_obj_set_style_pad_all(top_container, 10, 0);
+        s_widgets.function_icons[index] = lv_label_create(container);
+        lv_obj_align(s_widgets.function_icons[index], LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_text_font(s_widgets.function_icons[index],
+                                   &lv_font_montserrat_36, 0);
+    }
 
-    s_widgets.power_label = lv_label_create(top_container);
-    lv_label_set_text(s_widgets.power_label, "Power: OFF");
-    lv_obj_set_style_text_color(s_widgets.power_label, lv_color_hex(0xFFFFFF), 0);
-
-    s_widgets.brightness_label = lv_label_create(top_container);
-    lv_label_set_text(s_widgets.brightness_label, "Brightness: 0%");
-    lv_obj_set_style_text_color(s_widgets.brightness_label, lv_color_hex(0xFFFFFF), 0);
-
-    lv_obj_t *bar_container = lv_obj_create(s_widgets.screen);
-    lv_obj_set_size(bar_container, LV_PCT(90), LV_PCT(20));
-    lv_obj_set_layout(bar_container, LV_LAYOUT_FLEX);
-    lv_obj_set_flex_flow(bar_container, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(bar_container,
-                          LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER,
-                          LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_bg_color(bar_container, lv_color_hex(0x333333), 0);
-    lv_obj_set_style_bg_opa(bar_container, LV_OPA_80, 0);
-    lv_obj_set_style_border_width(bar_container, 0, 0);
-    lv_obj_set_style_radius(bar_container, 5, 0);
-    lv_obj_set_style_pad_all(bar_container, 5, 0);
-
-    lv_obj_t *bar_label = lv_label_create(bar_container);
-    lv_label_set_text(bar_label, "LED Brightness");
-    lv_obj_set_style_text_color(bar_label, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_style_text_align(bar_label, LV_TEXT_ALIGN_CENTER, 0);
-
-    s_widgets.brightness_bar = lv_bar_create(bar_container);
-    lv_obj_set_size(s_widgets.brightness_bar, LV_PCT(100), 20);
-    lv_bar_set_range(s_widgets.brightness_bar, 0, 100);
-    lv_bar_set_value(s_widgets.brightness_bar, 0, LV_ANIM_OFF);
-    lv_obj_set_style_bg_color(s_widgets.brightness_bar, lv_color_hex(0x333333), 0);
-    lv_obj_set_style_bg_opa(s_widgets.brightness_bar, LV_OPA_100, 0);
-    lv_obj_set_style_radius(s_widgets.brightness_bar, 3, 0);
-    lv_obj_set_style_bg_color(s_widgets.brightness_bar, lv_color_hex(0x00FF00), LV_PART_INDICATOR);
-    lv_obj_set_style_bg_opa(s_widgets.brightness_bar, LV_OPA_100, LV_PART_INDICATOR);
-    lv_obj_set_style_radius(s_widgets.brightness_bar, 3, LV_PART_INDICATOR);
+    render_selection(APP_FUNCTION_SETTINGS);
 
     // Store the screen reference
     s_main_screen.view = s_widgets.screen;
@@ -271,9 +217,11 @@ static esp_err_t destroy_main_screen(void)
         s_widgets.screen = NULL;
     }
     
-    s_widgets.power_label = NULL;
-    s_widgets.brightness_label = NULL;
-    s_widgets.brightness_bar = NULL;
+    for (int index = 0; index < APP_FUNCTION_COUNT; index++) {
+        s_widgets.function_containers[index] = NULL;
+        s_widgets.function_icons[index] = NULL;
+        s_widgets.function_labels[index] = NULL;
+    }
 
     ESP_LOGI(TAG, "Main screen destroyed");
     return ESP_OK;
@@ -330,24 +278,10 @@ esp_err_t main_screen_init(void)
     return ESP_OK;
 }
 
-void main_screen_update_brightness(int value)
+void main_screen_update_selection(app_function_t function)
 {
     if (s_update_queue != NULL) {
-        main_screen_update_t update = {
-            .type = MAIN_SCREEN_UPDATE_BRIGHTNESS,
-            .data.brightness = value
-        };
-        xQueueSend(s_update_queue, &update, 0);
-    }
-}
-
-void main_screen_update_power_status(bool is_on)
-{
-    if (s_update_queue != NULL) {
-        main_screen_update_t update = {
-            .type = MAIN_SCREEN_UPDATE_POWER,
-            .data.power_on = is_on
-        };
+        main_screen_update_t update = {.selected_function = function};
         xQueueSend(s_update_queue, &update, 0);
     }
 }
